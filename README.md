@@ -73,10 +73,10 @@ the engine runs on timers and never waits on an animation event.
 ## Icons
 
 UI icons come from [lucide-react](https://lucide.dev): the padlock on a locked
-slot, the question mark in the header, and the speaker that follows the mute
-state. It tree-shakes, so those three cost about 1.7 kB gzipped out of a set of
-six thousand. Pass `strokeWidth` above the default 2 where an icon sits next to
-the game's heavier shapes.
+slot, the question mark in the header, the speaker that follows the mute state,
+and the note and bolt on the mixer's two rows. It tree-shakes, so those five
+cost about 1.8 kB gzipped out of a set of six thousand. Pass `strokeWidth` above
+the default 2 where an icon sits next to the game's heavier shapes.
 
 The favicon stays bespoke. A stock icon can say "cards", but not "this game",
 and app identity is the one place a general-purpose set has nothing to offer.

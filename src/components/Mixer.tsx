@@ -1,8 +1,11 @@
+import { Music, Zap } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { AudioSettings } from '../game/useAudioSettings'
 import { useDismiss } from './useDismiss'
 
 interface LevelProps {
   id: string
+  icon: ReactNode
   label: string
   value: number
   disabled: boolean
@@ -10,11 +13,12 @@ interface LevelProps {
   onSettle?: () => void
 }
 
-function Level({ id, label, value, disabled, onChange, onSettle }: LevelProps) {
+function Level({ id, icon, label, value, disabled, onChange, onSettle }: LevelProps) {
   const percent = Math.round(value * 100)
   return (
-    <div className="level">
+    <div className={disabled ? 'level is-off' : 'level'}>
       <label className="level-label" htmlFor={id}>
+        {icon}
         {label}
       </label>
       <input
@@ -47,6 +51,7 @@ export default function Mixer({ settings, onClose }: MixerProps) {
     <div className="popover mixer" id="mixer" ref={panel}>
       <Level
         id="mix-music"
+        icon={<Music size={13} strokeWidth={2.4} aria-hidden="true" />}
         label="MUSIC"
         value={settings.music}
         disabled={settings.muted}
@@ -54,6 +59,7 @@ export default function Mixer({ settings, onClose }: MixerProps) {
       />
       <Level
         id="mix-sfx"
+        icon={<Zap size={13} strokeWidth={2.4} aria-hidden="true" />}
         label="EFFECTS"
         value={settings.sfx}
         disabled={settings.muted}

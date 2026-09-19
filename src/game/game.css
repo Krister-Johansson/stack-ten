@@ -150,7 +150,7 @@
 }
 
 .mixer {
-  width: min(280px, calc(100% - 40px));
+  width: min(300px, calc(100% - 32px));
 }
 
 .help {
@@ -196,12 +196,21 @@
 
 .level {
   display: grid;
-  grid-template-columns: 62px 1fr 28px;
+  grid-template-columns: 88px 1fr 28px;
   align-items: center;
   gap: 10px;
 }
 
+/* Muted: the whole row reads as inactive, not just the slider. */
+.level.is-off .level-label,
+.level.is-off .level-value {
+  opacity: 0.45;
+}
+
 .level-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.14em;
