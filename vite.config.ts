@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { defineConfig } from 'vite'
@@ -8,4 +9,9 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  test: {
+    // The game logic has no DOM dependency, so the tests run in plain Node.
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
 })

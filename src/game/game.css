@@ -1,0 +1,712 @@
+/* Stack Ten board chrome. Anything that depends on game state (card colors,
+   stack offsets, flight vectors) is set inline; the rest lives here. */
+
+.screen {
+  position: relative;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top) + 18px) 0 calc(env(safe-area-inset-bottom) + 16px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 0%, #1b6b66 0%, #0f4c4c 55%, #0a3535 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.play {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- header ------------------------------------------------------------ */
+
+.hud {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 20px 10px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-stat--right {
+  align-items: flex-end;
+}
+
+.hud-label {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.hud-value {
+  font-family: var(--display);
+  font-size: 34px;
+  line-height: 1;
+  color: #fff;
+}
+
+.hud-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.logo {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.35);
+}
+
+.sound {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 209 102 / 0.5);
+  background: rgb(255 209 102 / 0.18);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    background 0.2s;
+}
+
+.sound.is-muted {
+  border-color: rgb(255 255 255 / 0.15);
+  background: rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.5);
+}
+
+.sound:active {
+  transform: scale(0.92);
+}
+
+/* --- sound mixer ------------------------------------------------------- */
+
+.mixer {
+  position: absolute;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  width: min(280px, calc(100% - 40px));
+  box-sizing: border-box;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  background: rgb(8 40 40 / 0.96);
+  box-shadow: 0 16px 30px rgb(0 0 0 / 0.45);
+  animation: fadein 0.15s both;
+}
+
+.level {
+  display: grid;
+  grid-template-columns: 62px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.level-range {
+  width: 100%;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.level-range:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.level-value {
+  font-family: var(--display);
+  font-size: 15px;
+  text-align: right;
+  color: #fff;
+}
+
+.mixer-mute {
+  margin-top: 2px;
+  padding: 8px 0;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(255 255 255 / 0.7);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    background 0.2s;
+}
+
+.mixer-mute.is-muted {
+  border-color: rgb(255 209 102 / 0.5);
+  background: rgb(255 209 102 / 0.18);
+  color: var(--gold);
+}
+
+.mixer-mute:active {
+  transform: scale(0.97);
+}
+
+/* --- board -------------------------------------------------------------- */
+
+.board-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 14px;
+  width: 100%;
+  box-sizing: border-box;
+  transform-origin: top center;
+}
+
+.pile {
+  position: relative;
+  height: 150px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 2px dashed rgb(255 255 255 / 0.22);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.04);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.pile.is-locked {
+  border: 2px solid rgb(255 255 255 / 0.06);
+  background: rgb(0 0 0 / 0.28);
+  cursor: default;
+}
+
+.pile.is-selected {
+  border: 2px solid rgb(255 255 255 / 0.7);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.pile.is-target {
+  border: 2px solid var(--gold);
+  background: rgb(255 209 102 / 0.12);
+  box-shadow:
+    0 0 0 3px rgb(255 209 102 / 0.25),
+    0 0 18px rgb(255 209 102 / 0.35);
+}
+
+.pile.fx-unlock {
+  animation: unlock 0.8s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.pile.fx-shake {
+  animation: shake 0.4s both;
+}
+
+.lock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lock-shackle {
+  width: 14px;
+  height: 12px;
+  border: 3px solid rgb(255 255 255 / 0.28);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.lock-body {
+  width: 22px;
+  height: 16px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.28);
+}
+
+/* --- cards -------------------------------------------------------------- */
+
+.card {
+  position: absolute;
+  left: calc(50% - 29px);
+  width: 58px;
+  height: 78px;
+  box-sizing: border-box;
+  border: 3px solid;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.28);
+  cursor: pointer;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 1.2, 0.4, 1),
+    opacity 0.3s,
+    top 0.12s;
+}
+
+/* A card in flight is driven by keyframes; transitions would fight them. */
+.card.is-flying {
+  transition: none;
+  box-shadow: 0 12px 18px rgb(0 0 0 / 0.45);
+}
+
+.card.is-lifted {
+  box-shadow:
+    0 12px 18px rgb(0 0 0 / 0.45),
+    0 2px 0 rgb(0 0 0 / 0.3);
+}
+
+.card-corner {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.card-value {
+  font-size: 34px;
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.card-back {
+  position: absolute;
+  inset: -3px;
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  border-radius: 9px;
+  background: repeating-linear-gradient(135deg, #3b7be0 0 6px, #2f6bd0 6px 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.card-back-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.9;
+}
+
+/* --- deck --------------------------------------------------------------- */
+
+.tray {
+  flex: none;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.tray-hint {
+  width: 64px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  color: rgb(255 255 255 / 0.5);
+}
+
+.tray-hint--left {
+  text-align: right;
+}
+
+.deck {
+  position: relative;
+  width: 64px;
+  height: 86px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    opacity 0.3s;
+}
+
+.deck.is-full {
+  opacity: 0.35;
+}
+
+.deck:active {
+  transform: scale(0.94);
+}
+
+.deck.is-dealing {
+  animation: deckPulse 0.38s ease-out both;
+}
+
+.deck-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.35);
+}
+
+.deck-layer--back {
+  background: #1d3f8a;
+  transform: translate(-5px, 5px) rotate(-5deg);
+}
+
+.deck-layer--mid {
+  background: #245bb5;
+  transform: translate(3px, 2px) rotate(3deg);
+}
+
+.deck-layer--front {
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  background: repeating-linear-gradient(135deg, #3b7be0 0 6px, #2f6bd0 6px 12px);
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deck-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.9;
+}
+
+/* --- merge effects ------------------------------------------------------ */
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.burst-ring {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border: 5px solid;
+  border-radius: 50%;
+  z-index: 45;
+  animation: ring 0.6s ease-out both;
+}
+
+.burst-spark {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  z-index: 46;
+  animation: spark 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+.banner {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: banner 1.5s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+.banner-title {
+  font-family: var(--display);
+  font-size: 30px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  text-shadow: 0 3px 0 rgb(0 0 0 / 0.5);
+}
+
+.banner-card {
+  width: 96px;
+  height: 128px;
+  border: 5px solid;
+  border-radius: 14px;
+  background: #fff;
+  font-family: var(--display);
+  font-size: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 18px 30px rgb(0 0 0 / 0.5);
+}
+
+.banner-sub {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* --- end of run --------------------------------------------------------- */
+
+.gameover {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgb(6 28 28 / 0.86);
+  animation: fadein 0.4s both;
+}
+
+.gameover p {
+  margin: 0;
+}
+
+.gameover-title {
+  font-family: var(--display);
+  font-size: 38px;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.gameover-label {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.gameover-score {
+  font-family: var(--display);
+  font-size: 96px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 4px 0 rgb(0 0 0 / 0.4);
+}
+
+.replay {
+  margin-top: 18px;
+  padding: 14px 34px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #0a3535;
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 5px 0 #b98c2a;
+  cursor: pointer;
+}
+
+.replay:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #b98c2a;
+}
+
+/* --- keyframes ---------------------------------------------------------- */
+
+/* Pile to pile: arc over and drop in. */
+@keyframes arrive {
+  0% {
+    transform: translate(var(--dx), var(--dy)) scale(1.06);
+  }
+  50% {
+    transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5 - 26px)) scale(1.14)
+      rotate(var(--rot));
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0);
+  }
+}
+
+/* Deck to pile, face down, ending edge-on for the flip. */
+@keyframes arriveBack {
+  0% {
+    transform: translate(var(--dx), var(--dy)) rotateY(0);
+  }
+  60% {
+    transform: translate(calc(var(--dx) * 0.4), calc(var(--dy) * 0.4 - 16px)) scale(1.08)
+      rotateY(40deg);
+  }
+  100% {
+    transform: translate(0, 0) scale(1.06) rotateY(90deg);
+  }
+}
+
+@keyframes flipIn {
+  0% {
+    transform: rotateY(90deg) scale(1.06);
+  }
+  100% {
+    transform: rotateY(0) scale(1);
+  }
+}
+
+/* Holds the back face on screen until the flip starts. */
+@keyframes backHide {
+  0%,
+  99.9% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.2) rotate(-14deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.22) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes unlock {
+  0% {
+    transform: scale(0.8);
+    box-shadow: 0 0 0 0 rgb(255 209 102 / 0.95);
+    background: rgb(255 209 102 / 0.35);
+  }
+  45% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 26px rgb(255 209 102 / 0);
+    background: rgb(255 255 255 / 0.04);
+  }
+}
+
+@keyframes ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes spark {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--a)) translateY(-70px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes banner {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  18% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -90%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes deckPulse {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px) scale(1.04);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

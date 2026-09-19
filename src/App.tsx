@@ -1,122 +1,77 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import Banner from './components/Banner'
+import Board from './components/Board'
+import Deck from './components/Deck'
+import GameOver from './components/GameOver'
+import Hud from './components/Hud'
+import Mixer from './components/Mixer'
+import { DEFAULT_MERGE_COUNT, MAX_MERGE_COUNT, MIN_MERGE_COUNT } from './game/constants'
+import { canDeal } from './game/rules'
+import { useAudioSettings } from './game/useAudioSettings'
+import { useGame } from './game/useGame'
+import './game/game.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+interface AppProps {
+  /** Cards of one value that collapse into the next value up. */
+  mergeCount?: number
 }
 
-export default App
+export default function App({ mergeCount = DEFAULT_MERGE_COUNT }: AppProps) {
+  const merge = Math.min(MAX_MERGE_COUNT, Math.max(MIN_MERGE_COUNT, Math.round(mergeCount)))
+  const { state, engine, scale, measurePile, wrapRef, boardRef, deckRef } = useGame(merge)
+  const audio = useAudioSettings()
+  const [mixerOpen, setMixerOpen] = useState(false)
+
+  const dealable = canDeal(state.piles)
+  const hint = state.over
+    ? ''
+    : state.sel !== null
+      ? 'PICK A PILE'
+      : dealable
+        ? `${merge} = MERGE`
+        : 'PILES FULL'
+
+  return (
+    <main className="screen">
+      {/* Inert while the run is over, so the end panel really is the only thing
+          a keyboard or screen reader can reach. */}
+      <div className="play" inert={state.over}>
+        <Hud
+          deals={state.deals}
+          best={state.best}
+          muted={audio.muted}
+          mixerOpen={mixerOpen}
+          onToggleMixer={() => {
+            // Opening the mixer is a gesture, so the audio can start here and
+            // the levels can be judged by ear right away.
+            audio.start()
+            setMixerOpen((open) => !open)
+          }}
+        />
+        {mixerOpen ? <Mixer settings={audio} onClose={() => setMixerOpen(false)} /> : null}
+
+        <div className="board-wrap" ref={wrapRef}>
+          <Board
+            state={state}
+            mergeCount={merge}
+            scale={scale}
+            onTapPile={(i) => engine.tapPile(i)}
+            measurePile={measurePile}
+            boardRef={boardRef}
+          />
+        </div>
+
+        <Deck
+          hint={hint}
+          dealable={dealable}
+          pulsing={state.dealPulse}
+          onDeal={() => engine.deal()}
+          deckRef={deckRef}
+        />
+      </div>
+
+      {state.banner ? <Banner key={state.banner.id} banner={state.banner} /> : null}
+      {state.over ? <GameOver best={state.best} onReplay={() => engine.reset()} /> : null}
+    </main>
+  )
+}
