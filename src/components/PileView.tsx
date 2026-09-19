@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import { topRun } from '../game/rules'
 import type { Pile } from '../game/types'
 import CardView from './CardView'
@@ -56,16 +57,7 @@ export default function PileView({
       aria-pressed={selected}
     >
       {pile.unlocked ? null : (
-        <svg className="lock" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M8 11V7.5a4 4 0 0 1 8 0V11"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-          />
-          <rect x="4.6" y="10.6" width="14.8" height="10.8" rx="3" fill="currentColor" />
-        </svg>
+        <Lock className="lock" size={28} strokeWidth={2.4} aria-hidden="true" />
       )}
       {pile.cards.map((card, i) => (
         <CardView

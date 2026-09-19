@@ -1,3 +1,5 @@
+import { CircleHelp, Volume2, VolumeX } from 'lucide-react'
+
 interface HudProps {
   deals: number
   best: number
@@ -34,7 +36,7 @@ export default function Hud({
             aria-controls="help"
             aria-label="How to play"
           >
-            ?
+            <CircleHelp size={20} strokeWidth={2.2} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -43,6 +45,11 @@ export default function Hud({
             aria-expanded={mixerOpen}
             aria-controls="mixer"
           >
+            {muted ? (
+              <VolumeX size={12} strokeWidth={2.6} aria-hidden="true" />
+            ) : (
+              <Volume2 size={12} strokeWidth={2.6} aria-hidden="true" />
+            )}
             {muted ? 'SOUND OFF' : 'SOUND ON'}
           </button>
         </div>

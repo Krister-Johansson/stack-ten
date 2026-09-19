@@ -70,7 +70,18 @@ The rest is animation principles applied where they earn their place:
 `prefers-reduced-motion: reduce` cuts all of it. None of it is load-bearing:
 the engine runs on timers and never waits on an animation event.
 
-## Icon
+## Icons
+
+UI icons come from [lucide-react](https://lucide.dev): the padlock on a locked
+slot, the question mark in the header, and the speaker that follows the mute
+state. It tree-shakes, so those three cost about 1.7 kB gzipped out of a set of
+six thousand. Pass `strokeWidth` above the default 2 where an icon sits next to
+the game's heavier shapes.
+
+The favicon stays bespoke. A stock icon can say "cards", but not "this game",
+and app identity is the one place a general-purpose set has nothing to offer.
+The cards, deck backs and merge bursts are likewise drawn here: they are
+artwork, not iconography.
 
 `public/favicon.svg` is the source: a card bearing a ten, in the colour the
 palette gives that value, over two more fanned behind it on the board's felt.
