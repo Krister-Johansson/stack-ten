@@ -56,10 +56,16 @@ export default function PileView({
       aria-pressed={selected}
     >
       {pile.unlocked ? null : (
-        <span className="lock" aria-hidden="true">
-          <span className="lock-shackle" />
-          <span className="lock-body" />
-        </span>
+        <svg className="lock" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M8 11V7.5a4 4 0 0 1 8 0V11"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+          />
+          <rect x="4.6" y="10.6" width="14.8" height="10.8" rx="3" fill="currentColor" />
+        </svg>
       )}
       {pile.cards.map((card, i) => (
         <CardView

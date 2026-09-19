@@ -322,25 +322,10 @@
   position: absolute;
   left: 50%;
   top: 50%;
+  width: 30px;
+  height: 30px;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.lock-shackle {
-  width: 14px;
-  height: 12px;
-  border: 3px solid rgb(255 255 255 / 0.28);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-}
-
-.lock-body {
-  width: 22px;
-  height: 16px;
-  border-radius: 4px;
-  background: rgb(255 255 255 / 0.28);
+  color: rgb(255 255 255 / 0.28);
 }
 
 /* --- cards -------------------------------------------------------------- */

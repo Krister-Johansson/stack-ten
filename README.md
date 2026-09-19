@@ -70,6 +70,21 @@ The rest is animation principles applied where they earn their place:
 `prefers-reduced-motion: reduce` cuts all of it. None of it is load-bearing:
 the engine runs on timers and never waits on an animation event.
 
+## Icon
+
+`public/favicon.svg` is the source: a card bearing a ten, in the colour the
+palette gives that value, over two more fanned behind it on the board's felt.
+It is drawn on a 64 unit grid with the numerals as paths rather than text, so
+it needs no font and stays crisp at 16px.
+
+`public/apple-touch-icon.png` is generated from it. iOS masks the icon itself,
+so that one is full bleed with the rounding dropped:
+
+```sh
+sed 's|rect width="64" height="64" rx="14"|rect width="64" height="64"|' \
+  public/favicon.svg | rsvg-convert -w 180 -h 180 -o public/apple-touch-icon.png
+```
+
 ## Sound
 
 Tapping the SOUND pill opens a mixer with separate MUSIC and EFFECTS levels and
