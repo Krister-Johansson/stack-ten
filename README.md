@@ -43,6 +43,33 @@ pnpm test     # vitest, once
 colors, stack offsets, flight vectors) are inline styles; the rest is in
 `src/game/game.css`.
 
+## Motion
+
+Every card is two elements. The outer `.card-slot` holds its place in the
+stack and does nothing else; the inner `.card` carries every flight, lift and
+merge. Nothing animates a property that would force layout, so re-spacing a
+pile of ten costs no layout work, and the two transforms never fight each
+other.
+
+The rest is animation principles applied where they earn their place:
+
+- Arrivals end on a squash and recover, baked into the tail of the `arrive`
+  and `flipIn` keyframes rather than chained after them. That keeps each
+  landing inside the window the engine already waits for, so the timings in
+  `constants.ts` did not have to move.
+- Card faces scale from their bottom edge, which is where a card meets the
+  stack below it, so a landing reads as weight rather than as a resize.
+- A dealt card turns under a 340px perspective, so it reads as a card on its
+  edge instead of a rectangle folding flat.
+- A held run sways on a slow loop, each card offset from the one under it, so
+  it undulates instead of hanging dead in the air.
+- The deck dips before it throws. Anticipation before the action.
+- Folding into a merge drops the springy easing the pick-up uses, because
+  overshoot reads wrong on cards converging into one.
+
+`prefers-reduced-motion: reduce` cuts all of it. None of it is load-bearing:
+the engine runs on timers and never waits on an animation event.
+
 ## Sound
 
 Tapping the SOUND pill opens a mixer with separate MUSIC and EFFECTS levels and

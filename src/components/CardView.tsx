@@ -1,5 +1,5 @@
 import type { Card } from '../game/types'
-import { cardClassName, cardStyle, type CardMode } from './cardStyle'
+import { cardVisual, type CardMode } from './cardStyle'
 
 interface CardViewProps {
   card: Card
@@ -11,18 +11,22 @@ interface CardViewProps {
 }
 
 export default function CardView({ card, index, count, inRun, mode }: CardViewProps) {
+  const visual = cardVisual(card, index, count, inRun, mode)
+
   return (
-    <span className={cardClassName(card, inRun, mode)} style={cardStyle(card, index, count, inRun, mode)}>
-      <span className="card-corner">{card.v}</span>
-      <span className="card-value">{card.v}</span>
-      {card.from && card.deal ? (
-        <span
-          className="card-back"
-          style={{ animation: `backHide ${card.from.delay + 240}ms linear both` }}
-        >
-          <span className="card-back-dot" />
-        </span>
-      ) : null}
+    <span className={visual.slotClassName} style={visual.slotStyle}>
+      <span className={visual.faceClassName} style={visual.faceStyle}>
+        <span className="card-corner">{card.v}</span>
+        <span className="card-value">{card.v}</span>
+        {card.from && card.deal ? (
+          <span
+            className="card-back"
+            style={{ animation: `backHide ${card.from.delay + 240}ms linear both` }}
+          >
+            <span className="card-back-dot" />
+          </span>
+        ) : null}
+      </span>
     </span>
   )
 }
