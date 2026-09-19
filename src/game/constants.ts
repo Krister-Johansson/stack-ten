@@ -13,10 +13,14 @@ export const BOARD_COLS = 5
 /** How far a picked-up run lifts out of its pile. */
 export const LIFT = 16
 
-/** Cards of the same value needed to merge into the next one up. */
+/**
+ * Cards of the same value needed to merge into the next one up. A run cannot
+ * outgrow the pile holding it, so the cap is also the ceiling here: above it,
+ * no run would ever complete and the game would never merge anything.
+ */
 export const DEFAULT_MERGE_COUNT = 10
 export const MIN_MERGE_COUNT = 3
-export const MAX_MERGE_COUNT = 12
+export const MAX_MERGE_COUNT = PILE_CAP
 
 /** Pile indices in the order they open up; the first four start open. */
 export const UNLOCK_ORDER = [10, 11, 12, 13, 14, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4]

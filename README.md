@@ -89,7 +89,9 @@ against a Web Audio stand-in and cover the bus levels, muting, and persistence.
 
 ## Changing the rules
 
-`App` takes a `mergeCount` prop, clamped to 3 through 12. Three makes merges
+`App` takes a `mergeCount` prop, clamped to 3 through `PILE_CAP`. A run
+lives inside one pile, so asking for more cards than a pile holds would mean
+nothing ever merges. Three makes merges
 cascade within a couple of deals, which is the quickest way to see the merge,
 unlock, and end-of-run paths:
 

@@ -63,6 +63,8 @@ export class StackTenEngine {
   private listeners = new Set<() => void>()
   private timers = new Set<ReturnType<typeof setTimeout>>()
   private uid = 0
+  /** Landings whose merge check has not run yet. */
+  private pending = 0
   private state: GameState
 
   constructor(audio: GameAudio | null = null) {
@@ -132,8 +134,10 @@ export class StackTenEngine {
 
   /** Deals one card onto every open pile, and costs one deal. */
   deal() {
-    const { piles, over, dealPulse, seenMax } = this.state
-    if (over || dealPulse) return
+    const { piles, over, seenMax } = this.state
+    // Dealing onto a run whose merge check is still pending would bury it: the
+    // check reads the top of the pile, and the new card is now on top.
+    if (over || this.pending > 0) return
     if (!canDeal(piles)) {
       this.sound((a) => a.bad())
       return
@@ -175,8 +179,8 @@ export class StackTenEngine {
 
     const last = DEAL_MS + (dealt.length - 1) * DEAL_STAGGER
     this.later(last + 40, () => this.set({ dealPulse: false }))
-    this.later(last + DEAL_SETTLE_MS, () => {
-      this.settle(dealt.map((d) => d.card.id))
+    this.land(last + DEAL_SETTLE_MS, () => {
+      this.settle(dealt.map((d) => d.card))
       for (const d of dealt) this.checkMerge(d.j)
       this.checkOver()
     })
@@ -227,9 +231,19 @@ export class StackTenEngine {
     this.timers.add(id)
   }
 
+  /** A `later` that also marks the board busy until it has run. */
+  private land(ms: number, run: () => void) {
+    this.pending++
+    this.later(ms, () => {
+      this.pending--
+      run()
+    })
+  }
+
   private clearTimers() {
     for (const id of this.timers) clearTimeout(id)
     this.timers.clear()
+    this.pending = 0
   }
 
   private sound(play: (audio: GameAudio) => void) {
@@ -297,20 +311,24 @@ export class StackTenEngine {
     this.set({ piles: next, sel: null })
     this.sound((a) => a.drop(count))
 
-    this.later(MOVE_MS + count * MOVE_STAGGER, () => {
-      this.settle(moving.map((c) => c.id))
+    this.land(MOVE_MS + count * MOVE_STAGGER, () => {
+      this.settle(moving)
       this.checkMerge(to)
       this.checkOver()
     })
   }
 
-  /** Drops the arrival flags once a card has finished flying. */
-  private settle(ids: number[]) {
-    const landed = new Set(ids)
+  /**
+   * Drops the arrival flags once a card has finished flying. Cards are matched
+   * by identity, not by id: moving a card replaces the object, so one that has
+   * been picked up since is left alone and keeps the flight it is on now.
+   */
+  private settle(landed: Card[]) {
+    const arrived = new Set(landed)
     this.set({
       piles: this.state.piles.map((pile) => ({
         ...pile,
-        cards: pile.cards.map((c) => (landed.has(c.id) ? { id: c.id, v: c.v } : c)),
+        cards: pile.cards.map((c) => (arrived.has(c) ? { id: c.id, v: c.v } : c)),
       })),
     })
   }
@@ -337,13 +355,14 @@ export class StackTenEngine {
       })
 
       let { seenMax, banner } = state
+      let opened: number | undefined
       if (v + 1 > seenMax) {
         seenMax = v + 1
         banner = { id: merged.id, v: v + 1 }
         this.sound((a) => a.unlock())
-        const opening = UNLOCK_ORDER.find((idx) => !piles[idx].unlocked)
-        if (opening !== undefined) {
-          piles = replacePile(piles, opening, { ...piles[opening], unlocked: true, fx: 'unlock' })
+        opened = UNLOCK_ORDER.find((idx) => !piles[idx].unlocked)
+        if (opened !== undefined) {
+          piles = replacePile(piles, opened, { ...piles[opened], unlocked: true, fx: 'unlock' })
         }
       }
 
@@ -360,14 +379,16 @@ export class StackTenEngine {
 
       this.set({ piles, seenMax, banner, bursts, best: Math.max(state.best, v + 1) })
 
+      // Clears only what this merge started. A second merge inside the window
+      // owns its own card and its own slot, and its animations run to the end.
       this.later(FX_LIFE_MS, () => {
         this.set({
           bursts: this.state.bursts.filter((b) => b.id !== merged.id),
           banner: this.state.banner?.id === merged.id ? null : this.state.banner,
-          piles: this.state.piles.map((p) => ({
+          piles: this.state.piles.map((p, idx) => ({
             ...p,
-            fx: p.fx === 'unlock' ? null : p.fx,
-            cards: p.cards.map((c) => (c.fresh ? { id: c.id, v: c.v } : c)),
+            fx: idx === opened && p.fx === 'unlock' ? null : p.fx,
+            cards: p.cards.map((c) => (c.id === merged.id && c.fresh ? { id: c.id, v: c.v } : c)),
           })),
         })
       })

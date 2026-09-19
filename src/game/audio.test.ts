@@ -229,6 +229,30 @@ describe('GameAudio', () => {
     expect(inner(audio).music?.paused).toBe(true)
   })
 
+  it('stays silent rather than throwing when Web Audio is missing', () => {
+    Object.assign(globalThis, { window: {} })
+    const audio = new GameAudio()
+
+    expect(audio.ensure()).toBeNull()
+    expect(() => audio.pick()).not.toThrow()
+    expect(() => audio.setMuted(true)).not.toThrow()
+    expect(() => audio.setMusicVolume(0.5)).not.toThrow()
+    expect(() => audio.setSfxVolume(0.5)).not.toThrow()
+  })
+
+  it('stays silent when the browser refuses to open a context', () => {
+    class Refuses {
+      constructor() {
+        throw new Error('blocked')
+      }
+    }
+    Object.assign(globalThis, { window: { AudioContext: Refuses } })
+    const audio = new GameAudio()
+
+    expect(audio.ensure()).toBeNull()
+    expect(() => audio.pick()).not.toThrow()
+  })
+
   it('dispose stops the track and drops the context', () => {
     const audio = new GameAudio()
     audio.ensure()

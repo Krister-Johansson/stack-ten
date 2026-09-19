@@ -78,12 +78,22 @@ export class GameAudio {
   private synthTimer: ReturnType<typeof setInterval> | null = null
   private musicFailed = false
 
-  ensure(): AudioContext {
+  /**
+   * Brings the audio up, or reports that it cannot be. Sound is never worth a
+   * thrown error: a browser without Web Audio, or one refusing to open a
+   * context, leaves the game silent and otherwise untouched.
+   */
+  ensure(): AudioContext | null {
     if (!this.ctx) {
       const Ctor =
         window.AudioContext ??
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      this.ctx = new Ctor()
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!Ctor) return null
+      try {
+        this.ctx = new Ctor()
+      } catch {
+        return null
+      }
       this.master = this.ctx.createGain()
       this.master.gain.value = this.muted ? 0 : 1
       this.master.connect(this.ctx.destination)
@@ -142,6 +152,7 @@ export class GameAudio {
 
   private tone({ f, f2, t = 0, d = 0.12, type = 'sine', g = 0.3, dest }: ToneOptions) {
     const c = this.ensure()
+    if (!c) return
     const osc = c.createOscillator()
     const amp = c.createGain()
     const at = c.currentTime + t
@@ -159,6 +170,7 @@ export class GameAudio {
 
   private noise({ t = 0, d = 0.08, g = 0.2, hp = 1200 }: NoiseOptions) {
     const c = this.ensure()
+    if (!c) return
     const src = c.createBufferSource()
     const buf = c.createBuffer(1, c.sampleRate * d, c.sampleRate)
     const ch = buf.getChannelData(0)

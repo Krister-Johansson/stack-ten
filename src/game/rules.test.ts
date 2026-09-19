@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { CARD_H, PILE_CAP, SLOT_H, SLOT_PAD } from './constants'
+import {
+  CARD_H,
+  DEFAULT_MERGE_COUNT,
+  MAX_MERGE_COUNT,
+  MIN_MERGE_COUNT,
+  PILE_CAP,
+  SLOT_H,
+  SLOT_PAD,
+} from './constants'
 import { canDeal, canDrop, cardTop, hasMove, shuffle, topRun, topValue } from './rules'
 import type { Pile } from './types'
 
@@ -110,6 +118,19 @@ describe('hasMove', () => {
   it('ignores locked piles as target and as source', () => {
     expect(hasMove([pile([2]), pile([2], false)], 10)).toBe(false)
     expect(hasMove([pile([2], false), pile([2])], 10)).toBe(false)
+  })
+})
+
+describe('merge count range', () => {
+  // A run lives in one pile, so a merge count above the cap could never
+  // complete: nothing would ever merge and no slot would ever open.
+  it('never asks for more cards than a pile can hold', () => {
+    expect(MAX_MERGE_COUNT).toBeLessThanOrEqual(PILE_CAP)
+  })
+
+  it('brackets the default', () => {
+    expect(DEFAULT_MERGE_COUNT).toBeGreaterThanOrEqual(MIN_MERGE_COUNT)
+    expect(DEFAULT_MERGE_COUNT).toBeLessThanOrEqual(MAX_MERGE_COUNT)
   })
 })
 
