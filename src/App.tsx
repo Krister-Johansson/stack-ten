@@ -3,6 +3,7 @@ import Banner from './components/Banner'
 import Board from './components/Board'
 import Deck from './components/Deck'
 import GameOver from './components/GameOver'
+import Help from './components/Help'
 import Hud from './components/Hud'
 import Mixer from './components/Mixer'
 import { DEFAULT_MERGE_COUNT, MAX_MERGE_COUNT, MIN_MERGE_COUNT } from './game/constants'
@@ -20,16 +21,9 @@ export default function App({ mergeCount = DEFAULT_MERGE_COUNT }: AppProps) {
   const merge = Math.min(MAX_MERGE_COUNT, Math.max(MIN_MERGE_COUNT, Math.round(mergeCount)))
   const { state, engine, scale, measurePile, wrapRef, boardRef, deckRef } = useGame(merge)
   const audio = useAudioSettings()
-  const [mixerOpen, setMixerOpen] = useState(false)
-
-  const dealable = canDeal(state.piles)
-  const hint = state.over
-    ? ''
-    : state.sel !== null
-      ? 'PICK A PILE'
-      : dealable
-        ? `${merge} = MERGE`
-        : 'PILES FULL'
+  // At most one popover at a time.
+  const [panel, setPanel] = useState<'mixer' | 'help' | null>(null)
+  const toggle = (next: 'mixer' | 'help') => setPanel((open) => (open === next ? null : next))
 
   return (
     <main className="screen">
@@ -40,15 +34,18 @@ export default function App({ mergeCount = DEFAULT_MERGE_COUNT }: AppProps) {
           deals={state.deals}
           best={state.best}
           muted={audio.muted}
-          mixerOpen={mixerOpen}
+          mixerOpen={panel === 'mixer'}
+          helpOpen={panel === 'help'}
           onToggleMixer={() => {
             // Opening the mixer is a gesture, so the audio can start here and
             // the levels can be judged by ear right away.
             audio.start()
-            setMixerOpen((open) => !open)
+            toggle('mixer')
           }}
+          onToggleHelp={() => toggle('help')}
         />
-        {mixerOpen ? <Mixer settings={audio} onClose={() => setMixerOpen(false)} /> : null}
+        {panel === 'mixer' ? <Mixer settings={audio} onClose={() => setPanel(null)} /> : null}
+        {panel === 'help' ? <Help mergeCount={merge} onClose={() => setPanel(null)} /> : null}
 
         <div className="board-wrap" ref={wrapRef}>
           <Board
@@ -62,8 +59,7 @@ export default function App({ mergeCount = DEFAULT_MERGE_COUNT }: AppProps) {
         </div>
 
         <Deck
-          hint={hint}
-          dealable={dealable}
+          dealable={canDeal(state.piles)}
           pulsing={state.dealPulse}
           onDeal={() => engine.deal()}
           deckRef={deckRef}

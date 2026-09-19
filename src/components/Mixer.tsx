@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
 import type { AudioSettings } from '../game/useAudioSettings'
+import { useDismiss } from './useDismiss'
 
 interface LevelProps {
   id: string
@@ -41,27 +41,10 @@ interface MixerProps {
 }
 
 export default function Mixer({ settings, onClose }: MixerProps) {
-  const panel = useRef<HTMLDivElement | null>(null)
-
-  // A popover, not a modal: Escape or a tap outside puts it away.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node
-      if (!panel.current?.contains(target) && !(target as Element).closest?.('.sound')) onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPointerDown)
-    }
-  }, [onClose])
+  const panel = useDismiss(onClose, '.sound')
 
   return (
-    <div className="mixer" id="mixer" ref={panel}>
+    <div className="popover mixer" id="mixer" ref={panel}>
       <Level
         id="mix-music"
         label="MUSIC"

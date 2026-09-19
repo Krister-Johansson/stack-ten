@@ -3,10 +3,20 @@ interface HudProps {
   best: number
   muted: boolean
   mixerOpen: boolean
+  helpOpen: boolean
   onToggleMixer: () => void
+  onToggleHelp: () => void
 }
 
-export default function Hud({ deals, best, muted, mixerOpen, onToggleMixer }: HudProps) {
+export default function Hud({
+  deals,
+  best,
+  muted,
+  mixerOpen,
+  helpOpen,
+  onToggleMixer,
+  onToggleHelp,
+}: HudProps) {
   return (
     <header className="hud">
       <div className="hud-stat">
@@ -15,15 +25,27 @@ export default function Hud({ deals, best, muted, mixerOpen, onToggleMixer }: Hu
       </div>
       <div className="hud-title">
         <h1 className="logo">STACK TEN</h1>
-        <button
-          type="button"
-          className={muted ? 'sound is-muted' : 'sound'}
-          onClick={onToggleMixer}
-          aria-expanded={mixerOpen}
-          aria-controls="mixer"
-        >
-          {muted ? 'SOUND OFF' : 'SOUND ON'}
-        </button>
+        <div className="hud-actions">
+          <button
+            type="button"
+            className="help-toggle"
+            onClick={onToggleHelp}
+            aria-expanded={helpOpen}
+            aria-controls="help"
+            aria-label="How to play"
+          >
+            ?
+          </button>
+          <button
+            type="button"
+            className={muted ? 'sound is-muted' : 'sound'}
+            onClick={onToggleMixer}
+            aria-expanded={mixerOpen}
+            aria-controls="mixer"
+          >
+            {muted ? 'SOUND OFF' : 'SOUND ON'}
+          </button>
+        </div>
       </div>
       <div className="hud-stat hud-stat--right">
         <span className="hud-label">BEST</span>
